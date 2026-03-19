@@ -2,13 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GameFrame {
-    JFrame frame;
-    int width;
-    int height;
+    private JFrame frame;
+    private int width;
+    private int height;
 
-    Container cp;
+    private JPanel cp;
 
-    GameCanvas gameCanvas;
+    private GameCanvas gameCanvas;
 
     public GameFrame() {
         frame = new JFrame();
@@ -17,11 +17,12 @@ public class GameFrame {
     }
 
     public void setupGUI() {
-        cp = frame.getContentPane();
+        cp = (JPanel) frame.getContentPane();
         frame.setSize(width, height);
         frame.setTitle("Final Project - Senas - Soriano");
 
         gameCanvas = new GameCanvas(width, height);
+        gameCanvas.setupControls(cp.getInputMap(), cp.getActionMap());
         cp.add(gameCanvas);
         
         frame.pack();
