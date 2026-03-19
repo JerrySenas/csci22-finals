@@ -7,23 +7,19 @@ import javax.swing.*;
  *  in this project: the MainMenuScreen, the CharacterSelectScreen, and the GameScreen.
  * <p>
  * Each Screen is responsible for updating, rendering, and handling user input. Screens 
- * are dependent on another class that is a JComponent 
- * (which, for this project, is the GameCanvas).
+ * are dependent on a JPanel (which, for this project, is the found in GameFrame).
  */
 public abstract class Screen {
-    ActionMap actionMap;
-    InputMap inputMap;
-
     /**
-     * Constructs the Screen, then populates the ActionMap and InputMap of the GameCanvas.
-     * @param am The ActionMap of the GameCanvas.
-     * @param im The InputMap of the GameCanvas.
+     * Clears then populates both the ActionMap and the InputMap of the GameFrame.
+     * @param am The ActionMap of the GameFrame
+     * @param im The InputMap of the GameFrame
      */
-    public Screen(ActionMap am, InputMap im) {
-        actionMap = am;
-        inputMap = im;
-        setupActionMap();
-        setupInputMap();
+    public void setupControls(ActionMap am, InputMap im) {
+        am.clear();
+        setupActionMap(am);
+        im.clear();
+        setupInputMap(im);
     }
 
     /**
@@ -63,47 +59,50 @@ public abstract class Screen {
     public abstract void cancelAction();
 
     /**
-     * Populates actionMap with the AbstractActions associated with, by default, 
+     * Populates the ActionMap with the AbstractActions associated with, by default, 
      * the up, down, left and right arrow keys, the z key, and the x key.
      * <p>
      * This method assumes that upAction, downAction, leftAction, rightAction, 
      * confirmAction (for the z key), and cancelAction (for the x key) are all 
      * already implemented.
+     * 
+     * @param am The ActionMap to be populated.
      */
-    public void setupActionMap() {
-        actionMap.put("up", new AbstractAction(){
+    public void setupActionMap(ActionMap am) {
+        am.put("up", new AbstractAction(){
             public void actionPerformed(ActionEvent ae) { upAction(); }
         });
-        actionMap.put("down", new AbstractAction(){
+        am.put("down", new AbstractAction(){
             public void actionPerformed(ActionEvent ae) { downAction(); }
         });
-        actionMap.put("left", new AbstractAction(){
+        am.put("left", new AbstractAction(){
             public void actionPerformed(ActionEvent ae) { leftAction(); }
         });
-        actionMap.put("right", new AbstractAction(){
+        am.put("right", new AbstractAction(){
             public void actionPerformed(ActionEvent ae) { rightAction(); }
         });
-        actionMap.put("confirm", new AbstractAction(){
+        am.put("confirm", new AbstractAction(){
             public void actionPerformed(ActionEvent ae) { confirmAction(); }
         });
-        actionMap.put("cancel", new AbstractAction(){
+        am.put("cancel", new AbstractAction(){
             public void actionPerformed(ActionEvent ae) { cancelAction(); }
         });
     }
 
     /**
-     * Maps key bindings to the corresponding AbstractAction in actionMap.
+     * Maps key bindings to the corresponding method for an InputMap.
      * Confirm is mapped to the z key and cancel is mapped to the x key.
      * <p>
      * This method assumes that setupActionMap has already been run.
-     * @see #setupActionMap()
+     * 
+     * @param im The InputMap to be populated with key bindings.
      */
-    public void setupInputMap() {
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), "up");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), "down");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), "left");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, false), "right");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0, false), "confirm");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0, false), "cancel");
+    public void setupInputMap(InputMap im) {
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), "up");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), "down");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), "left");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, false), "right");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0, false), "confirm");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0, false), "cancel");
     }
 }

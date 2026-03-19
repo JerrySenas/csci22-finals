@@ -18,11 +18,12 @@ public class GameFrame {
 
     public void setupGUI() {
         cp = (JPanel) frame.getContentPane();
+        cp.setFocusable(true);
         frame.setSize(width, height);
         frame.setTitle("Final Project - Senas - Soriano");
 
         gameCanvas = new GameCanvas(width, height);
-        gameCanvas.setupControls(cp.getInputMap(), cp.getActionMap());
+        gameCanvas.setupControls(cp.getActionMap(), cp.getInputMap());
         cp.add(gameCanvas);
         
         frame.pack();
