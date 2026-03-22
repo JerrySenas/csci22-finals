@@ -1,5 +1,10 @@
+import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 /**
@@ -10,6 +15,33 @@ import javax.swing.*;
  * are dependent on a JPanel (which, for this project, is the found in GameFrame).
  */
 public abstract class Screen {
+    private ArrayList<Sprite> sprites = new ArrayList<>();
+
+    public ArrayList<Sprite> getSprites() {return sprites;}
+
+    public void addSprite(Sprite sprite) {
+        sprites.add(sprite);
+    }
+    
+    /**
+     * Updates the state of this Screen. Runs every frame.
+    */
+   public void update() {
+        for (Sprite sprite : sprites) {
+            sprite.update();
+        }
+    }
+    /**
+     * Defines what must be drawn for the current frame. Runs every frame.
+     * 
+     * @param g2d The Graphics2D object that is passed into the paintComponent method of the GameCanvas.
+    */
+   public void draw(Graphics2D g2d) {
+       for (Sprite sprite : sprites) {
+           sprite.draw(g2d);
+        }
+    }
+
     /**
      * Clears then populates both the ActionMap and the InputMap of the GameFrame.
      * @param am The ActionMap of the GameFrame
@@ -22,17 +54,14 @@ public abstract class Screen {
         setupInputMap(im);
     }
 
-    /**
-     * Updates the state of this Screen. Runs every frame.
-     */
-    public abstract void update();
-    /**
-     * Defines what must be drawn for the current frame. Runs every frame.
-     * 
-     * @param g2d The Graphics2D object that is passed into the paintComponent method of the GameCanvas.
-     */
-    public abstract void draw(Graphics2D g2d);
-
+    public BufferedImage loadImage(String filepath) {
+        try {
+            return ImageIO.read(new File(filepath));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
     /**
      * Defines how this Screen should handle an up arrow key press.
      */
