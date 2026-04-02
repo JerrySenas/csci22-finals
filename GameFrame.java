@@ -26,7 +26,6 @@ public class GameFrame {
         gameCanvas.setupControls(cp.getActionMap(), cp.getInputMap());
         cp.add(gameCanvas);
         
-        frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
