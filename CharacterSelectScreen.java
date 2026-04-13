@@ -1,24 +1,139 @@
-import javax.imageio.ImageIO;
-import java.io.*;
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
 import java.awt.geom.*;
 import java.awt.image.*;
+import java.io.*;
+import java.net.*;
+import javax.imageio.ImageIO;
 
 public class CharacterSelectScreen extends Screen {
-    class Portrait extends Sprite {
-        public Portrait(int x, int y, String filepath) {
-            super(x, y, filepath);
+    private Sprite[] portraits;
+
+    private int p1Selected;
+    private int p2Selected;
+    public static final int numCharas = 10;
+
+    private Cursor p1Cursor;
+    private Cursor p2Cursor;
+
+    private FullBody p1FullBody;
+    private FullBody p2FullBody;
+    private BufferedImage[] fullBodyImages;
+
+    private ReadFromServer readFromServer;
+    private DataOutputStream writeToServer;
+
+    public CharacterSelectScreen() {
+        p1Selected = 0;
+        p2Selected = 0;
+
+
+        fullBodyImages = new BufferedImage[numCharas];
+
+
+        portraits = new Sprite[numCharas];
+
+        p1FullBody = new FullBody(false);
+        p2FullBody = new FullBody(true);
+
+        addSprite(p1FullBody);
+        addSprite(p2FullBody);
+
+        for (int i = 0; i < portraits.length; i++) {
+            int offset = 64;
+            int row = i / 2;
+            if (row % 2 == 1) {
+                offset = 0;
+            }
+            int xCoord = 350 + offset + (i%2)*125;
+            int yCoord = 100 + 110 * row;
+
+            portraits[i] = new Sprite(xCoord, yCoord, String.format("assets/portraits/chara%02d.png", i));
+            addSprite(portraits[i]);
+            fullBodyImages[i] = loadImage(String.format("assets/portraits/fullbody%02d.png", i));
         }
 
-        @Override
-        public void draw(Graphics2D g2d) {
-            g2d.drawImage(getImage(), (int) getX(), (int) getY(), null);
+
+        p1Cursor = new Cursor(portraits[0].getX(), portraits[0].getY(), true);
+        p2Cursor = new Cursor(portraits[1].getX(), portraits[1].getY(), false);
+        addSprite(p2Cursor);
+        addSprite(p1Cursor);
+
+
+        connectToServer();
+    }
+
+    public void connectToServer() {
+        try {
+            Socket socket = new Socket("localhost", 9999);
+            readFromServer = new ReadFromServer(new DataInputStream(socket.getInputStream()));
+            new Thread(readFromServer).start();
+            writeToServer = new DataOutputStream(socket.getOutputStream());
+        } catch (IOException e) {
+            System.out.println("Error in establishing connection with server: " + e);
         }
     }
 
-    class Cursor extends Sprite {
+    @Override
+    public void update() {
+        super.update();
+        p1Cursor.setTargetX(portraits[p1Selected].getX());
+        p1Cursor.setTargetY(portraits[p1Selected].getY());
+        p1FullBody.setImage(p1Selected);
+
+        p2Cursor.setTargetX(portraits[p2Selected].getX());
+        p2Cursor.setTargetY(portraits[p2Selected].getY());
+        p2FullBody.setImage(p2Selected);
+    }
+
+
+    @Override
+    public void upAction() {
+        try {
+            writeToServer.writeInt(KeyEvent.VK_UP);
+            writeToServer.flush();
+        } catch (IOException e) { }
+    }
+    @Override
+    public void downAction() {
+        try {
+            writeToServer.writeInt(KeyEvent.VK_DOWN);
+            writeToServer.flush();
+        } catch (IOException e) { }
+    }
+    @Override
+    public void leftAction() {
+        try {
+            writeToServer.writeInt(KeyEvent.VK_LEFT);
+            writeToServer.flush();
+        } catch (IOException e) { }
+    }
+    @Override
+    public void rightAction() {
+        try {
+            writeToServer.writeInt(KeyEvent.VK_RIGHT);
+            writeToServer.flush();
+        } catch (IOException e) { }
+    }
+    @Override
+    public void confirmAction() {
+        try {
+            writeToServer.write(KeyEvent.VK_Z);
+        } catch (IOException e) { }
+        if (!p1Cursor.isSelected) {
+            p1Cursor.select();
+            p2Cursor.select();
+        }
+    }
+    @Override
+    public void cancelAction() {
+        try {
+            writeToServer.write(KeyEvent.VK_X);
+        } catch (IOException e) { }
+        if (p1Cursor.isSelected) { p1Cursor.deselect(); }
+    }
+    
+    private class Cursor extends Sprite {
         private int extraSize;
         private double bobTime;
         private boolean isSelected;
@@ -88,7 +203,7 @@ public class CharacterSelectScreen extends Screen {
         }
     }
 
-    class FullBody extends Sprite {
+    private class FullBody extends Sprite {
         double scale;
         int height;
         int width;
@@ -100,7 +215,6 @@ public class CharacterSelectScreen extends Screen {
             height = 0;
             width = 0;
             isReversed = reversed;
-            setImage(0);
         }
 
         @Override
@@ -112,7 +226,7 @@ public class CharacterSelectScreen extends Screen {
         }
 
         public void setImage(int charaNum) {
-            BufferedImage rawImage = loadImage(String.format("assets/portraits/fullbody%02d.png", charaNum));
+            BufferedImage rawImage = fullBodyImages[charaNum];
             int startX = 0;
 
             for (int i = 0; i < rawImage.getWidth(); i++) {
@@ -127,121 +241,43 @@ public class CharacterSelectScreen extends Screen {
             scale = 768.0 / getImage().getHeight();
             height = 768;
             width = (int) (getImage().getWidth() * scale);
+            setY(30);
+            setX(-30);
+
             if (isReversed) {
                 setTargetX(1024);
                 setX(1024);
                 width *= -1;
             }
-            setY(30);
-            setX(-30);
+        }
+    }
+    private class ReadFromServer implements Runnable {
+        private DataInputStream dataIn;
+
+        public ReadFromServer(DataInputStream in) {
+            dataIn = in;
+        }
+
+        public void run() {
+            try {
+                while (true) {
+                    p1Selected = dataIn.readInt();
+                    p2Selected = dataIn.readInt();
+                    Thread.sleep(10);
+                }
+            } catch (Exception e) { }
         }
     }
 
-    private Portrait[] portraits;
+    private class WriteToServer implements Runnable {
+        private DataOutputStream dataOut;
 
-    private int selectedPortrait;
-    private int numCharas;
-
-    private Cursor p1Cursor;
-    private Cursor p2Cursor;
-
-    private FullBody p1FullBody;
-    private FullBody p2FullBody;
-
-    public CharacterSelectScreen() {
-        selectedPortrait = 0;
-        numCharas = 10;
-
-        p1FullBody = new FullBody(false);
-        p2FullBody = new FullBody(true);
-        addSprite(p1FullBody);
-        addSprite(p2FullBody);
-
-        portraits = new Portrait[numCharas];
-
-        for (int i = 0; i < portraits.length; i++) {
-            int offset = 64;
-            int row = i / 2;
-            if (row % 2 == 1) {
-                offset = 0;
-            }
-            int xCoord = 350 + offset + (i%2)*125;
-            int yCoord = 100 + 110 * row;
-
-            portraits[i] = new Portrait(xCoord, yCoord, String.format("assets/portraits/chara%02d.png", i));
-            addSprite(portraits[i]);
+        public WriteToServer(DataOutputStream out) {
+            dataOut = out;
         }
 
-        p1Cursor = new Cursor(portraits[0].getX(), portraits[0].getY(), true);
-        p2Cursor = new Cursor(portraits[1].getX(), portraits[1].getY(), false);
-        addSprite(p2Cursor);
-        addSprite(p1Cursor);
-    }
+        public void run() {
 
-
-    @Override
-    public void upAction() {
-        if (!p1Cursor.isSelected) {
-            selectedPortrait -= 2;
-            if (selectedPortrait < 0) {
-                selectedPortrait += numCharas;
-            }
-
-            p1Cursor.setTargetX(portraits[selectedPortrait].getX());
-            p1Cursor.setTargetY(portraits[selectedPortrait].getY());
-            p1FullBody.setImage(selectedPortrait);
         }
     }
-    @Override
-    public void downAction() {
-        if (!p1Cursor.isSelected) {
-            selectedPortrait += 2;
-            if (selectedPortrait > numCharas - 1) {
-                selectedPortrait -= numCharas;
-            }
-
-            p1Cursor.setTargetX(portraits[selectedPortrait].getX());
-            p1Cursor.setTargetY(portraits[selectedPortrait].getY());
-            p1FullBody.setImage(selectedPortrait);
-        };
-    }
-    @Override
-    public void leftAction() {
-        if (!p1Cursor.isSelected) {
-            selectedPortrait--;
-            if (selectedPortrait < 0) {
-                selectedPortrait = numCharas - 1;
-            }
-
-            p1Cursor.setTargetX(portraits[selectedPortrait].getX());
-            p1Cursor.setTargetY(portraits[selectedPortrait].getY());
-            p1FullBody.setImage(selectedPortrait);
-        }
-    }
-    @Override
-    public void rightAction() {
-        
-        if (!p1Cursor.isSelected) {
-            selectedPortrait++;
-            if (selectedPortrait > numCharas - 1) {
-                selectedPortrait = 0;
-            }
-
-            p1Cursor.setTargetX(portraits[selectedPortrait].getX());
-            p1Cursor.setTargetY(portraits[selectedPortrait].getY());
-            p1FullBody.setImage(selectedPortrait);
-        }
-    }
-    @Override
-    public void confirmAction() {
-        if (!p1Cursor.isSelected) {
-            p1Cursor.select();
-            p2Cursor.select();
-        }
-    }
-    @Override
-    public void cancelAction() {
-        if (p1Cursor.isSelected) { p1Cursor.deselect(); }
-    }
-    
 }

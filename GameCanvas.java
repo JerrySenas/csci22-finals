@@ -1,6 +1,6 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
 
 public class GameCanvas extends JComponent {
     private int width;
@@ -8,6 +8,7 @@ public class GameCanvas extends JComponent {
 
     private Screen currentScreen;
     private CharacterSelectScreen charaScreen;
+    private GameScreen gameScreen;
 
     private Timer animTimer;
     
@@ -16,6 +17,7 @@ public class GameCanvas extends JComponent {
         height = h;
 
         charaScreen = new CharacterSelectScreen();
+        gameScreen = new GameScreen();
         currentScreen = charaScreen;
         animTimer = new Timer(16, new ActionListener() {
             @Override
@@ -28,7 +30,7 @@ public class GameCanvas extends JComponent {
     }
 
     public void setupControls(ActionMap am, InputMap im) {
-        charaScreen.setupControls(am, im);
+        currentScreen.setupControls(am, im);
     }
 
     @Override

@@ -4,7 +4,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import javax.imageio.ImageIO;
 
-public abstract class Sprite {
+public class Sprite {
     private double x;
     private double y;
     private double targetX;

@@ -1,5 +1,6 @@
 import javax.swing.*;
-import java.awt.*;
+import java.io.*;
+import java.net.*;
 
 public class GameFrame {
     private JFrame frame;
@@ -9,6 +10,7 @@ public class GameFrame {
     private JPanel cp;
 
     private GameCanvas gameCanvas;
+    private Socket socket;
 
     public GameFrame() {
         frame = new JFrame();
